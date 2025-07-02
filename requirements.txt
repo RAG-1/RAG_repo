@@ -1,26 +1,30 @@
-#fastapi dependencies
-fastapi
-uvicorn
-python-dotenv
-pydantic
-pydantic_core
-# langchain dependencies, # for testing purposes
-langchain
-langchain-community
-langchain-openai
-# langchain-huggingface
-# langchain-chroma
-langchain-core
-langchain-prompts
-langgraph
-pinecone
-langchain_pinecone
-langchain_upstage #this shitter needs cl.exe (c/c++ compiler for windows) to install
-# chromadb
-# faiss-cpu
-# sentence-transformers
-openai
-# huggingface-hub
-# unstructured
-# unstructured[local-inference]
-# unstructured[all-docs]
+# 여기 아래부터
+# Core dependencies
+python-dotenv==1.1.1
+pydantic==2.11.7
+
+# FastAPI (used in imports but not in current execution)
+fastapi==0.115.14
+uvicorn==0.35.0
+
+# LangChain core
+langchain==0.3.26
+langchain-core==0.3.67
+langchain-community==0.3.26
+langchain-upstage==0.6.0
+langchain-pinecone==0.2.8
+
+# Vector database
+pinecone==7.3.0
+
+# HTTP client
+httpx==0.28.1
+requests==2.32.4
+
+# Type checking and validation
+typing_extensions==4.14.0
+annotated-types==0.7.0
+pydantic_core==2.33.2
+
+# Async support
+anyio==4.9.0
