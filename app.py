@@ -31,14 +31,14 @@ async def chat_endpoint(req: MessageRequest) -> dict:
     #                                  retriever=pinecone_retriever,
     #                                  return_source_documents=True)
 
-    result = rag.answer(req.message)
+    # result = rag.answer(req.message)
     # index = get_vector_index(language)
     # context = index.similarity_search(message)
     # answer = llm.generate_answer(context, message)
     # return {"reply": answer}
-    print(f"[chat] {req.message} -> {result}")
-    return {"reply": result}
-    # return {"reply": "helo"}
+    # print(f"[chat] {req.message} -> {result}")
+    # return {"reply": result}
+    return {"reply": "helo"}
 
 
 
