@@ -2,7 +2,7 @@
     # context = index.similarity_search(req.message)
     # answer = llm.generate_answer(context, req.message)
 
-from langchain_community.llms import OpenAI
+from langchain_openai import OpenAI
 # from langchain.chains import RetrievalQA
 from dotenv import load_dotenv
 from langchain_core.output_parsers import StrOutputParser
@@ -33,7 +33,7 @@ def build_all():
     embedding_upstage = UpstageEmbeddings(model="embedding-query", api_key=os.getenv("UPSTAGE_API_KEY"))
 
     vectordb = PineconeVectorStore(index=pc.Index("django"), embedding=embedding_upstage, namespace="")
-    retriever = vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+    retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 2})
 
     prompt = PromptTemplate(
         input_variables=["language", "query", "context"],

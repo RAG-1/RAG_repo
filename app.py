@@ -23,14 +23,14 @@ app.add_middleware(
 #     role: str
 #     content: str
 class MessageRequest(BaseModel):
-    message: str
+    query: str
     language: str = "python"  # 기본값을 "python"으로 설정
 
 @app.post("/chat")
 async def chat_endpoint(req: MessageRequest) -> dict:
 
-    #return rag.stream(req.message, req.language)
-    return {"reply": "helo"}
+    return {"reply" : rag.stream(req)}
+    #return {"reply": "helo"}
 
 
 
