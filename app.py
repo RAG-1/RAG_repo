@@ -2,9 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from rag_prac import rag_prac
-
+from dotenv import load_dotenv
 # ─── 1) 라이브러리 ─────────────────────────────────────
 
+load_dotenv()
 rag = rag_prac() # 
 app = FastAPI()
 
@@ -21,22 +22,28 @@ app.add_middleware(
 #     content: str
 class MessageRequest(BaseModel):
     message: str
+    language: str = "python"  # 기본값을 "python"으로 설정
 
 @app.post("/chat")
-async def chat_endpoint(req: MessageRequest):
+async def chat_endpoint(req: MessageRequest) -> dict:
     # qa = RetrievalQA.from_chain_type(llm=chat_upstage,
     #                                  chain_type="stuff",
     #                                  retriever=pinecone_retriever,
     #                                  return_source_documents=True)
 
-    #result = rag.answer(req.message)
-    # return {"reply": result['result']}
-    # return {"reply": rag.answer(req.message)["doc_answer"]}
-    return {"reply": "helo"}
+    result = rag.answer(req.message)
+    # index = get_vector_index(language)
+    # context = index.similarity_search(message)
+    # answer = llm.generate_answer(context, message)
+    # return {"reply": answer}
+    print(f"[chat] {req.message} -> {result}")
+    return {"reply": result}
+    # return {"reply": "helo"}
+
 
 
 @app.get("/health")
-@app.get("/")
+@app.get("/")   
 async def health_check():
     return {"status": "ok"}
 
