@@ -1,0 +1,26 @@
+#fastapi dependencies
+fastapi
+uvicorn
+python-dotenv
+pydantic
+pydantic_core
+# langchain dependencies, # for testing purposes
+langchain
+langchain-community
+langchain-openai
+# langchain-huggingface
+# langchain-chroma
+langchain-core
+langchain-prompts
+langgraph
+pinecone
+langchain_pinecone
+langchain_upstage
+# chromadb
+# faiss-cpu
+# sentence-transformers
+openai
+# huggingface-hub
+# unstructured
+# unstructured[local-inference]
+# unstructured[all-docs]
