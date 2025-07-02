@@ -15,7 +15,7 @@ langchain-prompts
 langgraph
 pinecone
 langchain_pinecone
-langchain_upstage
+langchain_upstage #this shitter needs cl.exe (c/c++ compiler for windows) to install
 # chromadb
 # faiss-cpu
 # sentence-transformers

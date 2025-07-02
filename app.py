@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 # from rag_prac import rag_prac
-from RAGModule.RAGModule import RAGModule
+from RAGModule import RAGModule
 from dotenv import load_dotenv
 # ─── 1) 라이브러리 ─────────────────────────────────────
 

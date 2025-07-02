@@ -30,9 +30,9 @@ def build_all():
     llm = OpenAI(model_name="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
-    embedding_upstage = UpstageEmbeddings(model="embedding-query")
+    embedding_upstage = UpstageEmbeddings(model="embedding-query", api_key=os.getenv("UPSTAGE_API_KEY"))
 
-    vectordb = PineconeVectorStore(index=pc.Index("django"), embedding=, namespace="")
+    vectordb = PineconeVectorStore(index=pc.Index("django"), embedding=embedding_upstage, namespace="")
     retriever = vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 
     prompt = PromptTemplate(
