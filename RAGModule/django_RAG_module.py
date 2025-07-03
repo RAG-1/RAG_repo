@@ -36,7 +36,8 @@ def build_all():
     llm = OpenAI(
         model_name="gpt-4o-mini",
         api_key=os.getenv("OPENAI_API_KEY"),
-        max_tokens=2048
+        max_tokens=2048,
+        temperature=0.0,
     )
 
     # 2) Memory 세팅
@@ -70,7 +71,7 @@ def build_all():
                                        api_key=os.getenv("UPSTAGE_API_KEY"))
 
     vectordb = PineconeVectorStore(index=pc.Index("django"), embedding=embedding)
-    retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 8})
+    retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 3})
 
     def retrieve_step(state):
         docs = retriever.get_relevant_documents(state["query"])
@@ -86,31 +87,40 @@ def build_all():
 Question: {query}
 
 You are a {language} expert.
-look **memory** and **context** to clarify user's question. 
-from question, follow user's fulfillment like language(eg. explain in korean, english..., etc) 
-or some order (eg. explain step by step, or just answer, etc).
+look **memory** and **context** to clarify user's question. memory contans user's previous questions and answers.
+Use the provided memory to understand the user's question
+ (eg. understand 'the thing' meaning in question, understand 'it' meaning in question).
+follow user's fulfillment(eg. explain in korean, english..., etc),
+also some order (eg. explain step by step, or just answer, etc).
+for the library or framework in certain language(eg. django in python, spring in java, ...), do not explain about the language itself, but only about the library or framework.
 
-when returning answer, Remove any preamble or greeting. Start your output EXACTLY at the <think> tag.
-**Begin** every response with your chain-of-thought, built-in system prompt wraped in `<think>...</think>`.
-then output the answer in ## Answer section.
+**Begin** every response with your chain-of-thought, put them on (your detailed chain-of-thought here)
+then output the answer below ## Answer line.
 
-so answer format always be like this: 
+format below. preserve html tags. add sections if needed(eg. ##Answer, ## Details & Examples, ## Version, ## Sources, etc):
 
-<think> </think>
+<details>
+  <summary>Show reasoning (chain-of-thought)</summary>
+  <pre><code>
+  (your detailed chain-of-thought here)
+  </code></pre>
+</details>
+
+<hr/>
 ## Answer
+## Details & Examples <- if needed.
+## Version <- if needed, you can add version info referring.
+## Sources <- if needed, website or document links, or any sources you used to answer.
 
-below the ## Answer section, u can do freely write your answer, while...
 
+IMPORTANT : keep in mind the following rules:
 NO HALF ANSWERS, NO HALLUCINATION, NO ASSUMPTIONS, NO GUESSING.
-context is the most relevant information (latest features of {language}) from the documentation for the answer.
-always try to answer with latest features of {language}, except when the user asks about older versions of {language}.
-so if context is enough to make answer, just return answer. 
-if lacks the answer, and if the answer must be related to the older version, 
-make answer based on your knowledge.
-missing info, or despite above procedures, yet the answer is not valid, reply: “This information is not fully explained by the provided documentation.”  
-Cite source files (e.g., django/models.rst).  
+**context** is the latest release notes of {language} from the documentation for the answer.
+with your old knowledge, and the **context**, answer the question.
+missing info, or despite above procedures, yet the answer is not valid, reply: “This information is not fully explained by the provided documentation.”
+always Cite source files that you used (e.g., django/models.rst).  
 Format code in ```python``` blocks.
-always mention the version you are referring to.
+always mention the version you are referring to precisely.
 
 <<<MEMORY>>>
 {memory}
@@ -119,7 +129,6 @@ always mention the version you are referring to.
 <<<CONTEXT>>>
 {context}
 <<<END_CONTEXT>>>
-
 """,
     )
 

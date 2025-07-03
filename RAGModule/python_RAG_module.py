@@ -14,6 +14,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
+from langchain.memory import ConversationBufferMemory
+
 # =============================================================================
 # 설정 및 모델 초기화
 # =============================================================================
@@ -129,6 +131,10 @@ Example:
         """최종 답변 생성 프롬프트"""
         return ChatPromptTemplate.from_messages([
             ("system", """
+<<<MEMORY>>>
+{memory}
+<<<END_MEMORY>>>
+
 <<<CONTEXT>>>
 {context}
 <<<END_CONTEXT>>>
@@ -139,6 +145,8 @@ Example:
 
 You are **PyDoc Expert**, a senior Python engineer.
 You have gathered relevant information from Python documentation to answer the user's question.
+Use the provided memory to understand the user's question
+ (eg. understand 'the thing' meaning in question, understand 'it' meaning in question).
 
 **STRICT RULES:**
 1. **RAG-only responses**: Use ONLY information from the provided context
@@ -149,7 +157,7 @@ You have gathered relevant information from Python documentation to answer the u
 5. **Markdown format**: Use proper Markdown with `python` for code blocks
 6. **Accuracy first**: Better to say "unknown" than to guess
 
-Reply in the same language Korean, using the following structure:
+Reply in the same language what user says, using the following structure:
 
 **Response Structure:**
 ## Answer  
@@ -288,13 +296,14 @@ class ChainManager:
                 "error": str(e)
             }
     
-    def generate_answer(self, question: str, plan: str, context: str) -> Dict[str, Any]:
+    def generate_answer(self, question: str, plan: str, context: str, memory: str) -> Dict[str, Any]:
         """최종 답변 생성"""
         try:
             answer = self.answer_chain.invoke({
                 "input": question,
                 "plan": plan,
-                "context": context
+                "context": context,
+                "memory": memory     # ← ADD: supply memory to template
             })
             return {
                 "success": True,
@@ -330,10 +339,21 @@ class PythonRAG:
         self.model_manager = ModelManager()
         self.chain_manager = ChainManager(self.model_manager)
         self.document_retriever = DocumentRetriever(self.model_manager, self.config)
+
+        # ← ADD: initialize in‐memory conversation buffer
+        from langchain.memory import ConversationBufferMemory
+        self.memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            input_key="query",
+            output_key="answer",
+            return_messages=False
+        )
     
     def generate_answer(self, question: str) -> str:
         """기존 RAGModule.stream()과 동일한 역할"""
         try:
+            # ← ADD: load past Q&A turns into `mem`
+            mem = self.memory.load_memory_variables({"query": question})["chat_history"]
             # Step 1: 질문 분석
             analysis_result = self.chain_manager.analyze_question(question)
             if not analysis_result["success"]:
@@ -350,11 +370,24 @@ class PythonRAG:
             context = self.document_retriever.format_context(docs)
             
             # Step 3: 답변 생성
-            answer_result = self.chain_manager.generate_answer(question, plan, context)
+            # answer_result = self.chain_manager.generate_answer(question, plan, context)
+            answer_result = self.chain_manager.generate_answer(
+                question=question,
+                plan=plan,
+                context=context,
+                memory=mem           # ← ADD: inject memory here
+            )
             if not answer_result["success"]:
                 return f"답변 생성 중 오류가 발생했습니다: {answer_result['error']}"
             
-            return answer_result["answer"]
+            # return answer_result["answer"]
+            answer = answer_result["answer"]
+            # ← ADD: persist this Q&A for next turns
+            self.memory.save_context(
+                {"query": question},
+                {"answer": answer}
+            )
+            return answer
             
         except Exception as e:
             return f"시스템 오류가 발생했습니다: {str(e)}"
