@@ -11,12 +11,10 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_upstage import UpstageEmbeddings
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
     
-
 from pinecone import Pinecone
 
 import os
 from pydantic import BaseModel
-# from langchain.runnables import RunnablePassthrough
 
 load_dotenv()
 
