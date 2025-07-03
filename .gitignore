@@ -4,5 +4,6 @@ README.md
 .pyc
 __pycache__/
 .env
+venv/
 
 
