@@ -31,7 +31,7 @@ def build_all():
     embedding_upstage = UpstageEmbeddings(model="embedding-query", api_key=os.getenv("UPSTAGE_API_KEY"))
 
     vectordb = PineconeVectorStore(index=pc.Index("django"), embedding=embedding_upstage)
-    retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 2})
+    retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 8})
 
     prompt = PromptTemplate(
         input_variables=["language", "query", "context"],
