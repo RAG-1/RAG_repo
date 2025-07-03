@@ -1,1 +1,1 @@
-from .RAGModule import RAGModule
+from .RAGModule import RAGModule, MessageRequest

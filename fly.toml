@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for dae01-back on 2025-07-02T17:43:54+09:00
+# fly.toml app configuration file generated for dae01-back-twilight-wave-6371 on 2025-07-02T22:07:35+09:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'dae01-back'
+app = 'dae01-back-twilight-wave-6371'
 primary_region = 'nrt'
 
 [build]
@@ -17,6 +17,6 @@ primary_region = 'nrt'
   processes = ['app']
 
 [[vm]]
-  memory = '1gb'
+  memory = '2gb'
   cpu_kind = 'shared'
   cpus = 1

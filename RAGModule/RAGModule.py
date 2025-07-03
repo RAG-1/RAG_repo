@@ -1,4 +1,4 @@
- # index = get_vector_index(req.language)
+# index = get_vector_index(req.language)
     # context = index.similarity_search(req.message)
     # answer = llm.generate_answer(context, req.message)
 
@@ -26,6 +26,13 @@ class MessageRequest(BaseModel):
     language: str = "python"  # Default to "python"
 
 def build_all():
+    # 환경 변수 체크
+    required_keys = ["OPENAI_API_KEY", "PINECONE_API_KEY", "UPSTAGE_API_KEY"]
+    missing_keys = [key for key in required_keys if not os.getenv(key)]
+    
+    if missing_keys:
+        raise ValueError(f"Missing required environment variables: {missing_keys}")
+    
     # Build the RAG pipeline: retriever -> prompt -> llm -> output parser
     llm = OpenAI(model_name="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
