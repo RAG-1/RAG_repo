@@ -73,6 +73,13 @@ def build_all():
         )[1]
     )
 
+    debug_print = RunnableLambda(
+        lambda state: (
+            print(f"[DEBUG] Loaded print for query '{state['query']}':\n{state['search_query']}"),
+            state
+        )[1]
+    )
+
     # 4) 벡터스토어 & RAG retriever
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
     # embedding = UpstageEmbeddings(model="embedding-query", api_key=os.getenv("UPSTAGE_API_KEY"))
@@ -83,11 +90,18 @@ def build_all():
     retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 5})
 
     def retrieve_step(state):
-        docs = retriever.get_relevant_documents(state["search_query"])
-        logging.info(f"[DEBUG] Retrieved {docs} with query '{state['search_query']}'")
+        docs = retriever.get_relevant_documents(state["query"])
+        #logging.info(f"[DEBUG] Retrieved {docs} with query '{state['query']}'")
         return {
             **state,
             "context": "\n---\n".join(d.page_content for d in docs)
+        }
+    def retrieve_step2(state):
+        docs = retriever.get_relevant_documents(state["search_query"])
+        #logging.info(f"[DEBUG] Retrieved {docs} with query '{state['search_query']}'")
+        return {
+            **state,
+            "final_context": "\n---\n".join(d.page_content for d in docs)
         }
 
     # 5) PromptTemplate 정의 (memory + context 포함)
@@ -137,7 +151,7 @@ def build_all():
     <<<END_MEMORY>>>
 
     <<<CONTEXT>>>
-    {context}
+    {final_context}
     <<<END_CONTEXT>>>
     """), 
     ('user', "Question: {query}")
@@ -151,7 +165,7 @@ def build_all():
                 language=state["language"],
                 query=state["query"],
                 memory=state["memory"],
-                context=state["context"]
+                final_context=state["final_context"]
             )
         }
     )
@@ -159,13 +173,17 @@ def build_all():
     # a tiny chat‐prompt that extracts search keywords or clarifies intent
     analysis_prompt = ChatPromptTemplate.from_messages([
     ("system", """
-    You are a query analysis assistant. 
-    Given the user’s language wanna know (django, python... etc), previous conversation memory, and the raw question,
-    produce a **single concise** search query or set of keywords that will best surface relevant documentation.
-    Return **only** the refined query string.
+    You are a {language} expert.
+    look **memory** and **context** to clarify user's question. memory contans user's previous questions and answers.
+    Use the provided memory to understand the user's question
+    (eg. understand 'the thing' meaning in question, understand 'it' meaning in question).
+    follow user's fulfillment(eg. explain in korean, english..., etc),
+    also some order (eg. explain step by step, or just answer, etc).
+    do think, then return best querys for searching related results with users **question**.
     """),
             ("user", """
     Language: {language}
+    Context : {context}
     Memory: {memory}
     Question: {query}
     """)
@@ -177,10 +195,13 @@ def build_all():
         msgs = analysis_prompt.format_messages(
             language=state["language"],
             memory=state["memory"],
+            context=state["context"],
             query=state["query"]
         )
         # 2) 분석 LLM 호출
         msg = llm(msgs)
+
+        #print('former llm prompt : ', msgs)
         refined = msg.content.strip()
         # 3) state에 새 검색어로 저장
         return { **state, "search_query": refined }
@@ -192,6 +213,7 @@ def build_all():
     def safe_call_llm(state):
         try:
             # 1) ChatOpenAI 를 호출해 AIMessage 를 받습니다
+            #print("llm prompt : " , state['messages'])
             msg = llm(state["messages"])
             # 2) .content 속성(실제 텍스트)만 뽑아서 저장
             text = msg.content if hasattr(msg, "content") else str(msg)
@@ -226,9 +248,11 @@ def build_all():
     return (
         RunnablePassthrough()
         | load_memory
-        | debug_memory # Optional: Debugging memory content
-        | analyze_step
+       # | debug_memory # Optional: Debugging memory content
         | RunnableLambda(retrieve_step)
+        | analyze_step
+       # | debug_print
+        | RunnableLambda(retrieve_step2)
         | make_prompt
         | call_llm
         | parse_answer
