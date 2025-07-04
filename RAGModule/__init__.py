@@ -1,1 +1,1 @@
-from .RAGModule import RAGModule
+from .django_RAG_module import RAGModule
